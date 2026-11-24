@@ -1,0 +1,42 @@
+name: Build Android APK (Battle Space)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+
+      - name: Instalar Buildozer e Cython
+        run: |
+          pip3 install --upgrade pip
+          pip3 install buildozer cython==0.29.36 virtualenv
+
+      - name: Cache do Buildozer
+        uses: actions/cache@v4
+        with:
+          path: |
+            .buildozer
+            ~/.buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+
+      - name: Compilar APK com Buildozer
+        run: |
+          yes | buildozer -v android debug
+
+      - name: Publicar APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Battle-Space-APK
+          path: bin/*.apk
